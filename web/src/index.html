@@ -47,9 +47,16 @@
             <div id="compile-options">
                 <select id="compiler-picker" class="input">
                 </select>
+                <div class="compiler-option">
+                    <i id="compiler-status" class="fa fa-fw fa-spinner"></i>
+                </div>
                 <input id="compiler-flags" class="input" type="text" placeholder="Compiler options..."
                        autocomplete="off"
                        autocorrect="off" autocapitalize="off" spellcheck="false">
+                <div class="compiler-option">
+                    <input type="checkbox" id="show-compiler-log-input" checked>
+                    <label>&nbsp;Show compiler log</label>
+                </div>
             </div>
             <div id="output"></div>
         </div>

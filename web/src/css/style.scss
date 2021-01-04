@@ -111,6 +111,22 @@ html {
   width: 100%;
 }
 
+.compiler-option {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid black;
+  padding: 5px;
+}
+
+#compiler-status {
+  padding: 0 10px 0;
+}
+
+.compiler-option label {
+  white-space: nowrap;
+}
+
 #output {
   height: 100%;
   padding: 3px;

@@ -23,7 +23,8 @@ const COMPILER_MESSAGE_RE = /<source>:(\d+):(\d+): ((?:fatal )?error|warning):\s
 const DEFAULT_PLAYGROUND_DATA = {
   code: CTP_EXAMPLE,
   compiler: 'g102',
-  compiler_flags: '-fpermissive -std=c++17'
+  compiler_flags: '-fpermissive -std=c++17',
+  show_compiler_log: true
 };
 
 export class Playground {
@@ -40,7 +41,9 @@ export class Playground {
     for (const compiler of COMPILERS) {
       this._compiler_picker_select.options[this._compiler_picker_select.options.length] = new Option(compiler[0], compiler[1]);
     }
+    this._compiler_status = document.getElementById('compiler-status');
     this._compiler_flags_input = document.getElementById('compiler-flags');
+    this._show_compiler_log_input = document.getElementById('show-compiler-log-input');
     this._output_node = document.getElementById('output');
 
     this._model.onDidChangeContent(() => {
@@ -55,6 +58,10 @@ export class Playground {
       this._data.compiler_flags = e.target.value;
       this.compile();
     });
+    this._show_compiler_log_input.addEventListener('change', e => {
+      this._data.show_compiler_log = e.target.checked;
+      this.compile();
+    });
   }
 
   serialize () {
@@ -67,7 +74,11 @@ export class Playground {
     }
     for (const key of Object.keys(this._data)) {
       if (Object.prototype.hasOwnProperty.call(data, key)) {
-        this._data[key] = data[key];
+        if (typeof this._data[key] === 'boolean') {
+          this._data[key] = data[key] === 'true';
+        } else {
+          this._data[key] = data[key];
+        }
       }
     }
     this._update_ui();
@@ -90,6 +101,7 @@ export class Playground {
       }
     }
     this._compiler_flags_input.value = this._data.compiler_flags;
+    this._show_compiler_log_input.checked = this._data.show_compiler_log;
   }
 
   compile () {
@@ -105,19 +117,26 @@ export class Playground {
       para.classList.add('info');
       para.appendChild(node);
       this._output_node.appendChild(para);
+
+      // Spin compiler status.
+      this._compiler_status.style.color = null;
+      this._compiler_status.classList.remove('fa-check-circle');
+      this._compiler_status.classList.add('fa-spinner');
     }, 500);
 
     if (this._compiling !== null) {
       this._compiling.cancel();
     }
-    this._compiling = compile_and_parse(this._data.compiler, this._data.compiler_flags, this._data.code);
-    this._compiling.promise.then((x) => this._output(x));
+    this._compiling = compile_and_parse(this._data.compiler, this._data.compiler_flags, this._data.show_compiler_log,
+      this._data.code);
+    this._compiling.promise.then(([succeeded, printers]) => this._output(succeeded, printers));
   }
 
-  _output (printers) {
+  _output (compilation_succeeded, printers) {
     clearTimeout(this._output_is_compiling);
 
     this._output_node.innerHTML = '';
+    let compile_warning = false;
     const widgets = [];
     for (const printer of printers) {
       const para = document.createElement('span');
@@ -131,9 +150,13 @@ export class Playground {
       this._output_node.appendChild(para);
 
       if (printer.compiler_output) {
+        compile_warning = true;
         const match = COMPILER_MESSAGE_RE.exec(printer.message);
         if (match) {
           const line = parseInt(match[1]);
+          if (line > this._model.getLineCount()) {
+            continue;
+          }
           const start = this._model.getLineFirstNonWhitespaceColumn(line);
           const end = this._model.getLineLastNonWhitespaceColumn(line);
           const severity = match[3] === 'warning' ? 2 : 3;
@@ -150,6 +173,19 @@ export class Playground {
           );
         }
       }
+      // Set compiler status.
+      this._compiler_status.style.color = null;
+      if (compilation_succeeded) {
+        this._compiler_status.classList.add('fa-check-circle');
+      } else {
+        this._compiler_status.classList.add('fa-times-circle');
+      }
+      if (compile_warning || !compilation_succeeded) {
+        this._compiler_status.style.color = 'rgb(255, 101, 0)';
+      } else {
+        this._compiler_status.style.color = 'rgb(18, 187, 18)';
+      }
+      this._compiler_status.classList.remove('fa-spinner');
     }
     monaco.editor.setModelMarkers(this._model, 'compilerId', widgets);
   }

@@ -8,9 +8,9 @@ class CTPHelper:
     def __init__(self, include_offset):
         self._include_offset = include_offset
 
-    def parse(self, log):
+    def parse(self, log, show_compiler_log):
         error = None
-        ctp = CTP(TypePrettifier([], []), True)  # noqa
+        ctp = CTP(TypePrettifier([], []), show_compiler_log)  # noqa
         try:
             ctp.parse_error_log(iter(log))  # noqa
         except Exception as e:
@@ -63,5 +63,5 @@ class CTPHelper:
         return {'message': message + '\n', 'error_output': error_output, 'compiler_output': True}
 
 
-def parse(include_offset, log):
-    return CTPHelper(include_offset).parse(log)
+def parse(include_offset, log, show_compiler_log):
+    return CTPHelper(include_offset).parse(log, show_compiler_log)

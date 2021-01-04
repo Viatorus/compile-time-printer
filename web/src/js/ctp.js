@@ -27,7 +27,7 @@ function compile (compiler, compiler_flags, code) {
     method: 'POST'
   })
     .then(e => e.json())
-    .then(e => e.stderr.map(x => x.text));
+    .then(e => [e.code === 0, e.stderr.map(x => x.text)]);
 }
 
 const CTP_INCLUDE = /#\s*include\s*<ctp\/ctp\.hpp>/;
@@ -53,15 +53,17 @@ function include_ctp_header (code) {
   return [[CTP_LOC, line_nbr], code];
 }
 
-export function compile_and_parse (compiler, compiler_flags, code) {
+export function compile_and_parse (compiler, compiler_flags, show_compiler_log, code) {
   let timeout, include_offset;
   [include_offset, code] = include_ctp_header(code);
 
   const promise = new Promise(function (resolve, reject) {
     timeout = setTimeout(function () {
-      load_python
-        .then(() => compile(compiler, compiler_flags, code))
-        .then(log => parse(include_offset, log))
+      compile(compiler, compiler_flags, code)
+        .then(([succeeded, log]) =>
+          load_python
+            .then(() => [succeeded, parse(include_offset, log, show_compiler_log)])
+        )
         .then(resolve).catch(reject);
     }, 500);
   });

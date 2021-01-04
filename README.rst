@@ -4,7 +4,7 @@
 Compile-Time Printer
 ====================
 
-**Compile-Time Printer** allows printing values and types at compile-time in C++.
+**Compile-Time Printer** prints values and types at compile-time in C++.
 
 Teaser
 ------
@@ -14,21 +14,25 @@ Teaser
 +-------------------------------------------------+-------------------------------------------------+
 | .. code-block:: cpp                             | .. code-block:: none                            |
 |                                                 |                                                 |
-|     #include <ctp/ctp.hpp>                      |                                                 |
+|     #include <ctp/ctp.hpp>                      |     .                                           |
 |                                                 |                                                 |
 |     template<auto I>                            |                                                 |
 |     constexpr auto test(int i) {                |                                                 |
-|       // Standardized print.                    |                                                 |
-|       ctp::print(I + i, sizeof(I));             |    42 4                                         |
-|       // Formatted print.                       |                                                 |
-|       ctp::printf("Hello {}!\n", ctp::type{I}); |    Hello int!                                   |
+|                                                 |                                                 |
+|       // Formatted output.                      |                                                 |
+|       ctp::printf("Hello {}!\n", ctp::type{I}); |     Hello int!                                  |
+|                                                 |                                                 |
+|       // Standardized output.                   |                                                 |
+|       ctp::print(I + i, sizeof(I));             |     42 4                                        |
+|                                                 |                                                 |
 |       return true;                              |                                                 |
 |     }                                           |                                                 |
+|                                                 |                                                 |
 |     constexpr auto t = test<22>(20);            |                                                 |
-|             |             |
+|                                               . |                                               . |
 +-------------------------------------------------+-------------------------------------------------+
 
-Cannot believe it? Try it out online: https://viatorus.github.io/compile-time-printer/
+Try it out online: https://viatorus.github.io/compile-time-printer/
 
 Install
 -------
@@ -106,12 +110,12 @@ One workaround is to forward the expression to a constexpr variable instantiatio
 
 See URL for a complete example.
 
-Roadmap
--------
+Caching
++++++++
 
-- bugfixes after release
-- simple timer/benchmark API for
-- show compiler result (success/failed) in web
-- improve integration (suggestions welcome)
-- remove more warnings related to CTP
-- some CTP options in web (e.g. disable compiler log or remove some type names)
+The result of a constexpr functions could get cached. If this happens, a print statement will only evaluated once.
+Try to generate additional noise to prevent this. Especially if this happens in unevaluated context.
+Add additional changing input to the function call as (template) parameter. Also, GCC >=10 added
+``-fconstexpr-cache-depth=8`` as default caching value. Maybe a smaller value solves the issue.
+
+See fibonacci.
