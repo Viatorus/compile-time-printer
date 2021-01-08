@@ -1,3 +1,5 @@
+<BANNER> <BANNER PIP> <BANNER CONAN>
+
 .. image:: https://raw.githubusercontent.com/Viatorus/compile-time-printer/develop/web/static/banner-web.svg
     :alt: compile-time printer
 
@@ -5,6 +7,8 @@ Compile-Time Printer
 ====================
 
 **Compile-Time Printer** prints values and types at compile-time in C++.
+
+--> Some more info maybe?
 
 Teaser
 ------
@@ -76,6 +80,8 @@ Requirements
 How it works
 ------------
 
+The implementation of ``ctp::print/f(...)`` does nothing more than forcing the compiler to generate warnings depending on the passed arguments to these functions.
+The python tool parses the warnings and converts them back to the actually ]++-arguments and outputs them (formatted or standardized) to stdout or stderr. 
 
 
 Limitations
@@ -119,3 +125,8 @@ Add additional changing input to the function call as (template) parameter. Also
 ``-fconstexpr-cache-depth=8`` as default caching value. Maybe a smaller value solves the issue.
 
 See fibonacci.
+
+License
+-------
+
+CTP is distributed under the BSD-1 license. LINK
