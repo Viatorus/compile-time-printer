@@ -1,4 +1,4 @@
-.. image:: https://raw.githubusercontent.com/Viatorus/compile-time-printer/develop/web/static/banner-web.svg
+.. image:: https://raw.githubusercontent.com/Viatorus/compile-time-printer/main/web/static/banner-web.svg
     :alt: compile-time printer
 
 .. image :: https://img.shields.io/github/release/viatorus/compile-time-printer.svg
@@ -323,4 +323,4 @@ Check out this `example <https://git.io/JLhVT>`__.
 License
 -------
 
-`BSD-1 LICENSE <https://github.com/viatorus/compile-time-printer/blob/develop/LICENSE.txt>`__
+`BSD-1 LICENSE <https://github.com/viatorus/compile-time-printer/blob/main/LICENSE.txt>`__
