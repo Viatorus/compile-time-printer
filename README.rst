@@ -7,10 +7,10 @@
 .. image :: https://img.shields.io/pypi/v/compile-time-printer.svg
     :alt: PyPI
     :target: https://pypi.org/project/compile-time-printer/
-.. image :: https://api.bintray.com/packages/viatorus/compile-time-printer/Badge/images/download.svg
+.. image :: https://api.bintray.com/packages/viatorus/compile-time-printer/compile-time-printer%3Aviatorus/images/download.svg
     :alt: Conan
-    :target: https://bintray.com/viatorus/compile-time-printer/Badge/_latestVersion
-.. image :: https://github.com/viatorus/compile-time-printer/workflows/testing/badge.svg
+    :target: https://bintray.com/viatorus/compile-time-printer/compile-time-printer%3Aviatorus/_latestVersion
+.. image :: https://github.com/Viatorus/compile-time-printer/workflows/Testing/badge.svg
     :alt: Build Status
     :target: https://github.com/viatorus/compile-time-printer/releases
 .. image :: https://img.shields.io/badge/try-online-blue.svg
