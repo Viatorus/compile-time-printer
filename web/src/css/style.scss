@@ -1,0 +1,148 @@
+#content {
+  height: 100vh;
+  overflow: hidden;
+  display: flex;
+  flex-flow: column;
+}
+
+html {
+  overflow: hidden;
+}
+
+#header {
+  margin: 5px;
+  height: 5.5vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#footer {
+  text-align: center;
+  padding: 5px;
+}
+
+#hit-counter {
+  right: 0;
+  position: absolute;
+}
+
+#banner {
+  height: 100%;
+}
+
+#info {
+  flex-grow: 1;
+  text-align: center;
+  line-height: 100%;
+}
+
+#playground {
+  display: flex;
+  flex-grow: 1;
+  overflow: hidden;
+}
+
+#playground-options {
+  display: flex;
+}
+
+#playground-options > form > button {
+  height: 100%;
+}
+
+#share-link {
+  background: white;
+}
+
+#share-panel {
+  position: absolute;
+  z-index: 1;
+  display: flex;
+  background: white;
+  border: 1px solid #1e1e1e;
+  padding: 5px;
+  right: 5px;
+}
+
+#editor-panel {
+  width: calc(50% - 2.5px);
+  min-width: 20%;
+}
+
+#editor {
+  height: 100%;
+  padding: 3px;
+}
+
+#separator {
+  width: 5px;
+  cursor: col-resize;
+  background-color: #aaa;
+
+  /* Prevent the browser's built-in drag from interfering */
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+.input {
+  padding: 10px 6px;
+  font-weight: 400;
+  font-size: 1em;
+  font-family: Helvetica Neue, Helvetica, Arial, sans-serif;
+}
+
+#output-panel {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  width: calc(50% - 2.5px);
+  min-width: 20%;
+  min-height: 0;
+  font-family: SFMono-Regular, Menlo, Monaco, Consolas, Liberation Mono, Courier New, monospace;
+}
+
+#compile-options {
+  display: flex;
+}
+
+#compiler-flags {
+  width: 100%;
+}
+
+.compiler-option {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid black;
+  padding: 5px;
+}
+
+#compiler-status {
+  padding: 0 10px 0;
+}
+
+.compiler-option label {
+  white-space: nowrap;
+}
+
+#output {
+  height: 100%;
+  padding: 3px;
+  overflow: scroll;
+  background-color: #f5f5f5;
+}
+
+#output span {
+  margin: 0;
+  white-space: pre;
+}
+
+#output span.info {
+  color: #999;
+}
+
+#output span.stderr {
+  color: #a00;
+}

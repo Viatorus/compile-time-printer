@@ -1,0 +1,5 @@
+#!/bin/bash
+# This file is used the run different GCC versions right from a docker image.
+# This way, the dev/test environment around stays the same.
+set -e
+docker run --rm -i -v ${PWD}:/proj -w /proj $GCC_IMAGE g++ $@

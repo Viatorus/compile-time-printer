@@ -1,0 +1,11 @@
+exclude .conan/**
+exclude .github/**
+exclude examples/**
+exclude include/**
+exclude tests/**
+exclude web/**
+exclude .clang*
+exclude .coveragerc
+exclude .gitignore
+exclude CMakeLists.txt
+graft src/compile_time_printer/include
