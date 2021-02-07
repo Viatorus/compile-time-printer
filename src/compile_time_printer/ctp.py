@@ -296,7 +296,10 @@ class CTP:
                 else:
                     stack[-1].append(number)
             elif indicator == Indicator.NegativeInteger:
-                stack[-1].append(-number)
+                if type_of_value == 'char':
+                    stack[-1].append(chr(256 - number))
+                else:
+                    stack[-1].append(-number)
             elif indicator == Indicator.Type:
                 stack[-1].append(self._type_prettifier.prettify(type_of_value))
             elif indicator in [Indicator.ArrayBegin, Indicator.StringBegin, indicator.TupleBegin]:
@@ -306,7 +309,10 @@ class CTP:
                 stack[-1].append(array)
             elif indicator == Indicator.StringEnd:
                 array = stack.pop()
-                stack[-1].append(''.join(array))
+                # Transform characters back to bytes.
+                array = bytes([ord(x) for x in array])
+                # Decode.
+                stack[-1].append(array.decode('utf8'))
             elif indicator == Indicator.TupleEnd:
                 array = stack.pop()
                 stack[-1].append(tuple(array))

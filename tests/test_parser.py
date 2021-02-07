@@ -97,6 +97,11 @@ def test_char():
     assert_printers(log, [(False, sys.stdout, [' '])])
 
 
+def test_unicode():
+    log = compile_print_call(['"♞"'])
+    assert_printers(log, [(False, sys.stdout, ['♞'])])
+
+
 def test_integer():
     log = compile_print_call([1])
     assert_printers(log, [(False, sys.stdout, [1])])
