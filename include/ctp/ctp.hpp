@@ -139,6 +139,73 @@ template<auto ExprFunc, auto... Args>
 inline constexpr auto forward = detail::forward(std::forward<decltype(ExprFunc)>(ExprFunc),
                                                 std::forward<decltype(Args)>(Args)...);
 
+// Implementation detail follow.
+
+template<typename T>
+class view {
+public:
+	template<typename, typename = void>
+	struct has_size_and_data : std::false_type {};
+
+	template<typename U>
+	struct has_size_and_data<
+	  U,
+	  std::void_t<decltype(std::size(std::declval<U>())), decltype(std::data(std::declval<U>()))>> : std::true_type {};
+
+	constexpr view() = default;
+
+	template<size_t N>
+	explicit constexpr view(const std::array<T, N>& arr) : data_{arr.data()}, size_{arr.size()} {}
+
+	template<size_t N>
+	explicit constexpr view(const T (&arr)[N]) : data_{arr}, size_{N} {}
+
+	template<typename U, std::enable_if_t<has_size_and_data<U>::value>* = nullptr>
+	explicit constexpr view(const U& arr) : data_(arr.data()), size_{arr.size()} {}
+
+	template<typename U, std::enable_if_t<std::is_integral_v<U>>* = nullptr>
+	constexpr view(const T* first, U&& size) : data_{first}, size_{static_cast<size_t>(size)} {}
+
+	constexpr view(const T* first, const T* last) : data_{first}, size_{static_cast<size_t>(last - first)} {}
+
+	constexpr auto begin() const {
+		return data_;
+	}
+
+	constexpr auto end() const {
+		return data_ + size_;
+	}
+
+private:
+	const T* data_{};
+	size_t size_{};
+};
+
+template<typename T, size_t N>
+view(std::array<T, N>) -> view<T>;
+
+template<typename T, size_t N>
+view(T (&)[N]) -> view<T>;
+
+template<typename T>
+view(T) -> view<std::remove_pointer_t<decltype(std::data(std::declval<T>()))>>;
+
+template<typename T>
+view(T*, T*) -> view<T>;
+
+template<typename T, typename U>
+view(T*, U) -> view<T>;
+
+template<typename... Ts>
+struct type {
+	constexpr type() = default;
+
+	constexpr type(Ts&&... /*unused*/) {}
+};
+
+template<typename... Ts>
+type(Ts&&...) -> type<Ts...>;
+
 namespace detail {
 
 inline constexpr auto protocol_version = 1;
@@ -232,11 +299,18 @@ constexpr void print_value(int& one, T value, Args&&... /*unused*/) {
 	CTP_INTERNAL_PRINT(to_abs_int(fraction), Indicator::FractionFloat);
 }
 
+template<typename T>
+inline constexpr bool is_string_like_v =
+  std::is_constructible_v<std::string_view, T> ||
+#ifdef __cpp_char8_t
+  std::is_constructible_v<std::u8string_view, T> ||
+#endif
+  std::is_constructible_v<std::u16string_view, T> || std::is_constructible_v<std::u32string_view, T>;
+
 /// Print contiguous sequences of not char-like objects.
-template<
-  typename T,
-  typename... Args,
-  std::enable_if_t<!std::is_convertible_v<T, std::string_view> && sizeof(decltype(view(std::declval<T>())))>* = nullptr>
+template<typename T,
+         typename... Args,
+         std::enable_if_t<!is_string_like_v<T> && sizeof(decltype(view(std::declval<T>())))>* = nullptr>
 constexpr void print_value(int& one, T&& value, Args&&... args) {
 	CTP_INTERNAL_PRINT(one, Indicator::ArrayBegin);
 	for (auto v : view(value)) {
@@ -246,11 +320,12 @@ constexpr void print_value(int& one, T&& value, Args&&... args) {
 }
 
 /// Print contiguous sequence of char-like objects.
-template<typename T, typename... Args, std::enable_if_t<std::is_convertible_v<T, std::string_view>>* = nullptr>
+template<typename T, typename... Args, std::enable_if_t<is_string_like_v<T>>* = nullptr>
 constexpr void print_value(int& one, T value, Args&&... args) {
 	CTP_INTERNAL_PRINT(one, Indicator::StringBegin);
-	for (auto v : std::string_view{value}) {
-		print_value(one, v, std::forward<Args>(args)..., v, value);
+	if constexpr (std::is_constructible_v<std::string_view, T>) {
+		std::string_view v{value};
+		print_value(one, view{v}, std::forward<Args>(args)..., value);
 	}
 	CTP_INTERNAL_PRINT(one, Indicator::StringEnd);
 }
@@ -419,72 +494,6 @@ template<typename... Args>
 constexpr auto printf(std::string_view format, Args&&... args) {
 	return detail::print<true>(stdout, format, std::forward<Args>(args)...);
 }
-
-template<typename T>
-class view {
-public:
-	template<typename, typename = void>
-	struct has_size_and_data : std::false_type {};
-
-	template<typename U>
-	struct has_size_and_data<
-	  U,
-	  std::void_t<decltype(std::size(std::declval<U>())), decltype(std::data(std::declval<U>()))>> : std::true_type {};
-
-	constexpr view() = default;
-
-	template<size_t N>
-	explicit constexpr view(const std::array<T, N>& arr) : data_{arr.data()}, size_{arr.size()} {}
-
-	template<size_t N>
-	explicit constexpr view(const T (&arr)[N]) : data_{arr}, size_{N} {}
-
-	template<typename U, std::enable_if_t<has_size_and_data<U>::value>* = nullptr>
-	explicit constexpr view(const U& arr) : data_(arr.data()), size_{arr.size()} {}
-
-	template<typename U, std::enable_if_t<std::is_integral_v<U>>* = nullptr>
-	constexpr view(const T* first, U&& size) : data_{first}, size_{static_cast<size_t>(size)} {}
-
-	constexpr view(const T* first, const T* last) : data_{first}, size_{static_cast<size_t>(last - first)} {}
-
-	constexpr auto begin() const {
-		return data_;
-	}
-
-	constexpr auto end() const {
-		return data_ + size_;
-	}
-
-private:
-	const T* data_{};
-	size_t size_{};
-};
-
-template<typename T, size_t N>
-view(std::array<T, N>) -> view<T>;
-
-template<typename T, size_t N>
-view(T (&)[N]) -> view<T>;
-
-template<typename T>
-view(T) -> view<std::remove_pointer_t<decltype(std::data(std::declval<T>()))>>;
-
-template<typename T>
-view(T*, T*) -> view<T>;
-
-template<typename T, typename U>
-view(T*, U) -> view<T>;
-
-template<typename... Ts>
-struct type {
-	constexpr type() = default;
-
-	constexpr type(Ts&&... /*unused*/) {}
-};
-
-template<typename... Ts>
-type(Ts&&...) -> type<Ts...>;
-
 }    // namespace ctp
 
 #endif    // COMPILE_TIME_PRINTER_HPP_INCLUDE

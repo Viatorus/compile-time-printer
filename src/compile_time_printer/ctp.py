@@ -308,7 +308,7 @@ class CTP:
                 array = stack.pop()
                 stack[-1].append(array)
             elif indicator == Indicator.StringEnd:
-                array = stack.pop()
+                array = stack.pop()[0]
                 # Transform characters back to bytes.
                 array = bytes([ord(x) for x in array])
                 # Decode.

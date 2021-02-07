@@ -101,6 +101,9 @@ def test_unicode():
     log = compile_print_call(['"♞"'])
     assert_printers(log, [(False, sys.stdout, ['♞'])])
 
+    log = compile_print_call(['"┌{0:─^{2}}┐\\n│{1: ^{2}}│\\n└{0:─^{2}}┘\\n"', '""', '"Hello, world!"', 20], format=True)
+    assert_printers(log, [(True, sys.stdout, ['┌{0:─^{2}}┐\n│{1: ^{2}}│\n└{0:─^{2}}┘\n', "", 'Hello, world!', 20])])
+
 
 def test_integer():
     log = compile_print_call([1])
