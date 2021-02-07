@@ -45,8 +45,8 @@ constexpr auto test() {
 	FooBar foobar{3, -1.25F};
 	ctp::print(ctp::type<FooBar>{}, foobar);
 
-	ctp::printf(ctp::stderr, "\n\tFatal ");
-	ctp::print(ctp::stderr, "success! :)");
+	ctp::printf(ctp::stderr, u"\n\tFatal ");
+	ctp::print(ctp::stderr, U"success! :)");
 
 	[[maybe_unused]] constexpr auto i = ctp::print("Print examples:\n");
 
