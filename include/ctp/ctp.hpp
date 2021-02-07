@@ -67,12 +67,19 @@ template<typename FileDescriptor,
          std::enable_if_t<std::is_same_v<std::decay_t<FileDescriptor>, file_descriptor>>* = nullptr>
 constexpr auto print(FileDescriptor&& fd, Args&&... args);
 
+namespace detail {
+
+template<typename T>
+struct is_string_like;
+
+}
+
 /**
  * Formats and prints all arguments in the desired format.
  * @param args - the arguments to format and print
  */
-template<typename... Args>
-constexpr auto printf(std::string_view format = "", Args&&... args);
+template<typename Format, typename... Args, std::enable_if_t<detail::is_string_like<Format>::value>* = nullptr>
+constexpr auto printf(Format&& format, Args&&... args);
 
 /**
  * Formats and prints all arguments in the desired format to a specific file descriptor.
@@ -80,9 +87,11 @@ constexpr auto printf(std::string_view format = "", Args&&... args);
  * @param args - the arguments to format and print
  */
 template<typename FileDescriptor,
+         typename Format,
          typename... Args,
-         std::enable_if_t<std::is_same_v<std::decay_t<FileDescriptor>, file_descriptor>>* = nullptr>
-constexpr auto printf(FileDescriptor&& fd, std::string_view format = "", Args&&... args);
+         std::enable_if_t<std::is_same_v<std::decay_t<FileDescriptor>, file_descriptor> &&
+                          detail::is_string_like<Format>::value>* = nullptr>
+constexpr auto printf(FileDescriptor&& fd, Format&& format, Args&&... args);
 
 /**
  * For user-defined types, the format function of the specialized formatter<T> struct template is used.
@@ -301,12 +310,17 @@ constexpr void print_value(int& one, T value, Args&&... /*unused*/) {
 }
 
 template<typename T>
-inline constexpr bool is_string_like_v =
-  std::is_constructible_v<std::string_view, T> ||
+struct is_string_like :
+  std::bool_constant<std::is_constructible_v<std::string_view, T> ||
 #ifdef __cpp_char8_t
-  std::is_constructible_v<std::u8string_view, T> ||
+                     std::is_constructible_v<std::u8string_view, T> ||
 #endif
-  std::is_constructible_v<std::u16string_view, T> || std::is_constructible_v<std::u32string_view, T>;
+                     std::is_constructible_v<std::u16string_view, T> ||
+                     std::is_constructible_v<std::u32string_view, T>> {
+};
+
+template<typename T>
+inline constexpr bool is_string_like_v = is_string_like<T>::value;
 
 /// Print contiguous sequences of not char-like objects.
 template<typename T,
@@ -326,21 +340,21 @@ constexpr void print_value(int& one, T value, Args&&... args) {
 	CTP_INTERNAL_PRINT(one, Indicator::StringBegin);
 	if constexpr (std::is_constructible_v<std::string_view, T>) {
 		print_value(one, view{std::string_view{value}}, std::forward<Args>(args)..., value);
-        CTP_INTERNAL_PRINT(one, Indicator::StringEnd);
+		CTP_INTERNAL_PRINT(one, Indicator::StringEnd);
 	}
 #ifdef __cpp_char8_t
 	else if constexpr (std::is_constructible_v<std::u8string_view, T>) {
-        print_value(one, view{std::u8string_view{value}}, std::forward<Args>(args)..., value);
-        CTP_INTERNAL_PRINT(one, Indicator::StringEnd);
-    }
+		print_value(one, view{std::u8string_view{value}}, std::forward<Args>(args)..., value);
+		CTP_INTERNAL_PRINT(one, Indicator::StringEnd);
+	}
 #endif
 	else if constexpr (std::is_constructible_v<std::u16string_view, T>) {
-        print_value(one, view{std::u16string_view{value}}, std::forward<Args>(args)..., value);
-        CTP_INTERNAL_PRINT(one, Indicator::UnicodeStringEnd);
-    } else if constexpr (std::is_constructible_v<std::u32string_view, T>) {
-        print_value(one, view{std::u32string_view{value}}, std::forward<Args>(args)..., value);
-        CTP_INTERNAL_PRINT(one, Indicator::UnicodeStringEnd);
-    }
+		print_value(one, view{std::u16string_view{value}}, std::forward<Args>(args)..., value);
+		CTP_INTERNAL_PRINT(one, Indicator::UnicodeStringEnd);
+	} else if constexpr (std::is_constructible_v<std::u32string_view, T>) {
+		print_value(one, view{std::u32string_view{value}}, std::forward<Args>(args)..., value);
+		CTP_INTERNAL_PRINT(one, Indicator::UnicodeStringEnd);
+	}
 }
 
 /// Print tuple like.
@@ -496,17 +510,20 @@ constexpr auto print(FileDescriptor&& stream, Args&&... args) {
 	return detail::print<false>(std::forward<FileDescriptor>(stream), std::forward<Args>(args)...);
 }
 
+template<typename Format, typename... Args, std::enable_if_t<detail::is_string_like<Format>::value>*>
+constexpr auto printf(Format&& format, Args&&... args) {
+	return detail::print<true>(stdout, format, std::forward<Args>(args)...);
+}
+
 template<typename FileDescriptor,
+         typename Format,
          typename... Args,
-         std::enable_if_t<std::is_same_v<std::decay_t<FileDescriptor>, file_descriptor>>*>
-constexpr auto printf(FileDescriptor&& stream, std::string_view format, Args&&... args) {
+         std::enable_if_t<std::is_same_v<std::decay_t<FileDescriptor>, file_descriptor> &&
+                          detail::is_string_like<Format>::value>*>
+constexpr auto printf(FileDescriptor&& stream, Format&& format, Args&&... args) {
 	return detail::print<true>(std::forward<FileDescriptor>(stream), format, std::forward<Args>(args)...);
 }
 
-template<typename... Args>
-constexpr auto printf(std::string_view format, Args&&... args) {
-	return detail::print<true>(stdout, format, std::forward<Args>(args)...);
-}
 }    // namespace ctp
 
 #endif    // COMPILE_TIME_PRINTER_HPP_INCLUDE

@@ -76,9 +76,6 @@ def test_empty():
     log = compile_print_call([])
     assert_printers(log, [(False, sys.stdout, [])])
 
-    log = compile_print_call([], format=True)
-    assert_printers(log, [(True, sys.stdout, [''])])
-
     log = compile_print_call(['false'], pre_include='#define CTP_QUIET')
     assert_printers(log, [None])
 
@@ -129,7 +126,7 @@ def test_unicode():
     assert_printers(log, [(False, sys.stdout, ['♞'])])
 
     log = compile_print_call(['"┌{0:─^{2}}┐\\n│{1: ^{2}}│\\n└{0:─^{2}}┘\\n"', '""', '"Hello, world!"', 20], format=True)
-    assert_printers(log, [(True, sys.stdout, ['┌{0:─^{2}}┐\n│{1: ^{2}}│\n└{0:─^{2}}┘\n', "", 'Hello, world!', 20])])
+    assert_printers(log, [(True, sys.stdout, ['┌{0:─^{2}}┐\n│{1: ^{2}}│\n└{0:─^{2}}┘\n', '', 'Hello, world!', 20])])
 
 
 def test_integer():
