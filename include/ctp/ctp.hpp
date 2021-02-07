@@ -230,10 +230,11 @@ enum class Indicator : uint32_t {
 	ArrayEnd = 139,
 	StringBegin = 140,
 	StringEnd = 141,
-	TupleBegin = 142,
-	TupleEnd = 143,
-	CustomFormatBegin = 144,
-	CustomFormatEnd = 145,
+	UnicodeStringEnd = 142,
+	TupleBegin = 143,
+	TupleEnd = 144,
+	CustomFormatBegin = 145,
+	CustomFormatEnd = 146,
 };
 
 template<typename T, std::enable_if_t<std::is_arithmetic_v<T>>* = nullptr>
@@ -324,10 +325,22 @@ template<typename T, typename... Args, std::enable_if_t<is_string_like_v<T>>* = 
 constexpr void print_value(int& one, T value, Args&&... args) {
 	CTP_INTERNAL_PRINT(one, Indicator::StringBegin);
 	if constexpr (std::is_constructible_v<std::string_view, T>) {
-		std::string_view v{value};
-		print_value(one, view{v}, std::forward<Args>(args)..., value);
+		print_value(one, view{std::string_view{value}}, std::forward<Args>(args)..., value);
+        CTP_INTERNAL_PRINT(one, Indicator::StringEnd);
 	}
-	CTP_INTERNAL_PRINT(one, Indicator::StringEnd);
+#ifdef __cpp_char8_t
+	else if constexpr (std::is_constructible_v<std::u8string_view, T>) {
+        print_value(one, view{std::u8string_view{value}}, std::forward<Args>(args)..., value);
+        CTP_INTERNAL_PRINT(one, Indicator::StringEnd);
+    }
+#endif
+	else if constexpr (std::is_constructible_v<std::u16string_view, T>) {
+        print_value(one, view{std::u16string_view{value}}, std::forward<Args>(args)..., value);
+        CTP_INTERNAL_PRINT(one, Indicator::UnicodeStringEnd);
+    } else if constexpr (std::is_constructible_v<std::u32string_view, T>) {
+        print_value(one, view{std::u32string_view{value}}, std::forward<Args>(args)..., value);
+        CTP_INTERNAL_PRINT(one, Indicator::UnicodeStringEnd);
+    }
 }
 
 /// Print tuple like.

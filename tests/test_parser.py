@@ -22,8 +22,16 @@ static_assert(test());
 """
 
 
-def compile_file(input_file):
-    command = ['g++', '-Iinclude', '-std=c++17', '-fpermissive', '-fsyntax-only', '-xc++', '-']
+def std_20_support():
+    command = ['g++', '-std=c++20', '-fsyntax-only', '-xc++', '-']
+    prog = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    prog.stdin.write('int main() {}'.encode('utf8'))
+    prog.stdin.close()
+    return prog.wait() == 0
+
+
+def compile_file(input_file, std):
+    command = ['g++', '-Iinclude', '-std={}'.format(std), '-fpermissive', '-fsyntax-only', '-xc++', '-']
     prog = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     prog.stdin.write(input_file.encode('utf8'))
     prog.stdin.close()
@@ -33,13 +41,13 @@ def compile_file(input_file):
     prog.stderr.close()
 
 
-def compile_print_call(args, format=False, func_scope='', global_scope='', pre_include=''):
+def compile_print_call(args, format=False, func_scope='', global_scope='', pre_include='', std='c++17'):
     if format:
         call = 'printf'
     else:
         call = 'print'
     args = [str(x) for x in args]
-    return compile_file(cpp_file.format(pre_include, global_scope, func_scope, call, ', '.join(args)))
+    return compile_file(cpp_file.format(pre_include, global_scope, func_scope, call, ', '.join(args)), std=std)
 
 
 def assert_printers(log, expected, prettifier=None):
@@ -98,7 +106,26 @@ def test_char():
 
 
 def test_unicode():
+    if std_20_support():
+        log = compile_print_call(['char8_t(94)'], std='c++20')
+        assert_printers(log, [(False, sys.stdout, ['^'])])
+
+    log = compile_print_call(['char16_t(9822)'])
+    assert_printers(log, [(False, sys.stdout, ['♞'])])
+
+    log = compile_print_call(['char32_t(9822)'])
+    assert_printers(log, [(False, sys.stdout, ['♞'])])
+
     log = compile_print_call(['"♞"'])
+    assert_printers(log, [(False, sys.stdout, ['♞'])])
+
+    log = compile_print_call(['u"♞"'])
+    assert_printers(log, [(False, sys.stdout, ['♞'])])
+
+    log = compile_print_call(['u8"♞"'])
+    assert_printers(log, [(False, sys.stdout, ['♞'])])
+
+    log = compile_print_call(['U"♞"'])
     assert_printers(log, [(False, sys.stdout, ['♞'])])
 
     log = compile_print_call(['"┌{0:─^{2}}┐\\n│{1: ^{2}}│\\n└{0:─^{2}}┘\\n"', '""', '"Hello, world!"', 20], format=True)
