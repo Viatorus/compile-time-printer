@@ -5,6 +5,13 @@ import LZString from 'lz-string';
 
 const COMPILERS = [
   ['GCC trunk', 'gsnapshot'],
+  ['GCC 12.2', 'g122'],
+  ['GCC 12.1', 'g121'],
+  ['GCC 11.3', 'g113'],
+  ['GCC 11.2', 'g112'],
+  ['GCC 11.1', 'g111'],
+  ['GCC 10.4', 'g104'],
+  ['GCC 10.3', 'g103'],
   ['GCC 10.2', 'g102'],
   ['GCC 10.1', 'g101'],
   ['GCC 9.3', 'g93'],
@@ -22,7 +29,7 @@ const COMPILERS = [
 const COMPILER_MESSAGE_RE = /<source>:(\d+):(\d+): ((?:fatal )?error|warning):\s+(.+)/;
 const DEFAULT_PLAYGROUND_DATA = {
   code: CTP_EXAMPLE,
-  compiler: 'g102',
+  compiler: 'g113',
   compiler_flags: '-fpermissive -std=c++17',
   show_compiler_log: true
 };
@@ -140,8 +147,8 @@ export class Playground {
     const widgets = [];
     for (const printer of printers) {
       const para = document.createElement('span');
-      const node = document.createTextNode(printer.message);
-      if (printer.error_output) {
+      const node = document.createTextNode(printer.get('message'));
+      if (printer.get('error_output')) {
         para.classList.add('stderr');
       } else {
         para.classList.add('stdout');
@@ -149,9 +156,9 @@ export class Playground {
       para.appendChild(node);
       this._output_node.appendChild(para);
 
-      if (printer.compiler_output) {
+      if (printer.get('compiler_output')) {
         compile_warning = true;
-        const match = COMPILER_MESSAGE_RE.exec(printer.message);
+        const match = COMPILER_MESSAGE_RE.exec(printer.get('message'));
         if (match) {
           const line = parseInt(match[1]);
           if (line > this._model.getLineCount()) {

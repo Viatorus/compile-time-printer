@@ -25,6 +25,7 @@
     #endif
 #endif
 
+#include <array>
 #include <string_view>
 #include <tuple>
 
