@@ -1,14 +1,15 @@
-/* global pyodide, languagePluginLoader */
+/* global loadPyodide */
 import CTP_SOURCE from 'CTP/include/ctp/ctp.hpp';
 import CTP_PY_SOURCE from 'CTP/src/compile_time_printer/ctp.py';
 import CTP_WRAPPER_PY_SOURCE from './ctp_wrapper.py';
 
 // Use pyodide to run python code in js.
 let parse = null;
-const load_python = languagePluginLoader.then(() => {
+const load_python = loadPyodide().then((pyodide) => {
+  pyodide.globals.set('__name__', 'module'); // Just load library files, don't execute main.
   pyodide.runPython(CTP_PY_SOURCE);
   pyodide.runPython(CTP_WRAPPER_PY_SOURCE);
-  parse = pyodide.pyimport('parse');
+  parse = pyodide.globals.get('parse');
 });
 
 function compile (compiler, compiler_flags, code) {
@@ -62,7 +63,7 @@ export function compile_and_parse (compiler, compiler_flags, show_compiler_log, 
       compile(compiler, compiler_flags, code)
         .then(([succeeded, log]) =>
           load_python
-            .then(() => [succeeded, parse(include_offset, log, show_compiler_log)])
+            .then(() => [succeeded, parse(include_offset, log, show_compiler_log).toJs()])
         )
         .then(resolve).catch(reject);
     }, 500);
