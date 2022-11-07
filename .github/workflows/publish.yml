@@ -11,9 +11,9 @@ jobs:
       - uses: actions/checkout@v2
         with:
           fetch-depth: 0
-      - uses: actions/setup-python@v2
+      - uses: actions/setup-python@v4
         with:
-          python-version: '3.9'
+          python-version: '3.10'
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
@@ -26,22 +26,3 @@ jobs:
           python setup.py dists
           twine check dist/*
           twine upload --verbose dist/*
-  publish-conan:
-    runs-on: ubuntu-latest
-    container:
-      image: conanio/gcc10
-      options: --user 1001
-    steps:
-      - uses: actions/checkout@v2
-        with:
-          fetch-depth: 0
-      - name: Build and publish
-        env:
-          CONAN_USERNAME: ${{ secrets.CONAN_USERNAME }}
-          CONAN_PASSWORD: ${{ secrets.CONAN_PASSWORD }}
-          CONAN_REGISTRY_URL: ${{ secrets.CONAN_REGISTRY_URL }}
-        run: |
-          conan remote add publish $CONAN_REGISTRY_URL
-          conan user -p $CONAN_PASSWORD -r publish $CONAN_USERNAME
-          conan create .conan viatorus/stable
-          conan upload -c -r publish compile-time-printer
