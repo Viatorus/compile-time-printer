@@ -25,7 +25,7 @@ PROTOCOL_VERSION_INDICATOR_RE = re.compile(
 START_INDICATOR_RE = re.compile(r' in .?constexpr.? expansion of .ctp::detail::print_start_indicator<')
 END_INDICATOR_RE = re.compile(r' in .?constexpr.? expansion of .ctp::detail::print_end_indicator<')
 PRINT_INDICATOR_RE = re.compile(
-    r'^.+in .?constexpr.? expansion of .ctp::detail::print_value<(.+?), const ctp::detail::separator_t&.+$')
+    r'^.+in .?constexpr.? expansion of .ctp::detail::print_value<(.+?), const (ctp::detail::)?separator_t&.+$')
 VALUE_INDICATOR_RE = re.compile(r'right operand of shift expression .\((.+?) << (.+?)\).')
 
 # Matches for reducing warning outputs related to CTP.
