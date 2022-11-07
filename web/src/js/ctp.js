@@ -69,7 +69,7 @@ export function compile_and_parse (compiler, compiler_flags, show_compiler_log, 
     }, 500);
   });
   return {
-    promise: promise,
+    promise,
     cancel: function () {
       clearTimeout(timeout);
     }

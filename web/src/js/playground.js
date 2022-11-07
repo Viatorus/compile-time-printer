@@ -1,7 +1,7 @@
-/* global monaco */
 import { compile_and_parse } from './ctp';
 import CTP_EXAMPLE from 'CTP/tests/data/example.cpp';
 import LZString from 'lz-string';
+import * as monaco from 'monaco-editor';
 
 const COMPILERS = [
   ['GCC trunk', 'gsnapshot'],
@@ -169,7 +169,7 @@ export class Playground {
           const severity = match[3] === 'warning' ? 2 : 3;
           widgets.push(
             {
-              severity: severity,
+              severity,
               source: match[4],
               message: match[3],
               startLineNumber: line,

@@ -67,7 +67,7 @@ module.exports = {
     minimizer: [new TerserPlugin({
       extractComments: {
         condition: /^\**!|@preserve|@license|@cc_on/i,
-        banner: `Copyright 2021 Toni Neubert. BSL-1.0 licensed. Build from ${commitHash}.`
+        banner: `Copyright 2021-2022 Toni Neubert. BSL-1.0 licensed. Build from ${commitHash}.`
       }
     })]
   },
@@ -88,6 +88,8 @@ module.exports = {
     })
   ],
   devServer: {
-    writeToDisk: true
+    devMiddleware: {
+      writeToDisk: true
+    }
   }
 };
