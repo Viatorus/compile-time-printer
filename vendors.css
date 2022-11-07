@@ -356,8 +356,8 @@ template {
  * -------------------------- */
 @font-face {
   font-family: 'FontAwesome';
-  src: url(e5c0c62d732823225aaa.eot?v=4.7.0);
-  src: url(e5c0c62d732823225aaa.eot?#iefix&v=4.7.0) format('embedded-opentype'), url(4a2487b5cc6987c4f1de.woff2?v=4.7.0) format('woff2'), url(06c52960c6d2c0312a3e.woff?v=4.7.0) format('woff'), url(4c6f1cd9993ba8a53b8e.ttf?v=4.7.0) format('truetype'), url(0db1520f47986b6c755a.svg?v=4.7.0#fontawesomeregular) format('svg');
+  src: url(8b43027f47b20503057d.eot?v=4.7.0);
+  src: url(8b43027f47b20503057d.eot?#iefix&v=4.7.0) format('embedded-opentype'), url(20fd1704ea223900efa9.woff2?v=4.7.0) format('woff2'), url(f691f37e57f04c152e23.woff?v=4.7.0) format('woff'), url(1e59d2330b4c6deb84b3.ttf?v=4.7.0) format('truetype'), url(c1e38fd9e0e74ba58f7a.svg?v=4.7.0#fontawesomeregular) format('svg');
   font-weight: normal;
   font-style: normal;
 }
@@ -5616,7 +5616,7 @@ template {
 @font-face {
 	font-family: "codicon";
 	font-display: block;
-	src: url(46f2a8c143084f4f9b73.ttf) format("truetype");
+	src: url(b797181c93b3755f4fa1.ttf) format("truetype");
 }
 
 .codicon[class*='codicon-'] {
