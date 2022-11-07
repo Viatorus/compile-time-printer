@@ -169,7 +169,7 @@ export class Playground {
           const severity = match[3] === 'warning' ? 2 : 3;
           widgets.push(
             {
-              severity: severity,
+              severity,
               source: match[4],
               message: match[3],
               startLineNumber: line,
