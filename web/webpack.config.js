@@ -43,7 +43,8 @@ module.exports = {
       },
       {
         test: /\.(woff|woff2|eot|ttf|otf|svg)$/,
-        use: ['file-loader']
+        type: 'asset/resource',
+        dependency: { not: ['url'] },
       },
       {
         test: /\.([hc]pp|py)$/,
