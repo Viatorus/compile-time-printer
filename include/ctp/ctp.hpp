@@ -68,12 +68,19 @@ template<typename FileDescriptor,
          std::enable_if_t<std::is_same_v<std::decay_t<FileDescriptor>, file_descriptor>>* = nullptr>
 constexpr auto print(FileDescriptor&& fd, Args&&... args);
 
+namespace detail {
+
+template<typename T>
+struct is_string_like;
+
+}
+
 /**
  * Formats and prints all arguments in the desired format.
  * @param args - the arguments to format and print
  */
-template<typename... Args>
-constexpr auto printf(std::string_view format = "", Args&&... args);
+template<typename Format, typename... Args, std::enable_if_t<detail::is_string_like<Format>::value>* = nullptr>
+constexpr auto printf(Format&& format, Args&&... args);
 
 /**
  * Formats and prints all arguments in the desired format to a specific file descriptor.
@@ -81,9 +88,11 @@ constexpr auto printf(std::string_view format = "", Args&&... args);
  * @param args - the arguments to format and print
  */
 template<typename FileDescriptor,
+         typename Format,
          typename... Args,
-         std::enable_if_t<std::is_same_v<std::decay_t<FileDescriptor>, file_descriptor>>* = nullptr>
-constexpr auto printf(FileDescriptor&& fd, std::string_view format = "", Args&&... args);
+         std::enable_if_t<std::is_same_v<std::decay_t<FileDescriptor>, file_descriptor> &&
+                          detail::is_string_like<Format>::value>* = nullptr>
+constexpr auto printf(FileDescriptor&& fd, Format&& format, Args&&... args);
 
 /**
  * For user-defined types, the format function of the specialized formatter<T> struct template is used.
@@ -140,6 +149,73 @@ template<auto ExprFunc, auto... Args>
 inline constexpr auto forward = detail::forward(std::forward<decltype(ExprFunc)>(ExprFunc),
                                                 std::forward<decltype(Args)>(Args)...);
 
+// Implementation detail follow.
+
+template<typename T>
+class view {
+public:
+	template<typename, typename = void>
+	struct has_size_and_data : std::false_type {};
+
+	template<typename U>
+	struct has_size_and_data<
+	  U,
+	  std::void_t<decltype(std::size(std::declval<U>())), decltype(std::data(std::declval<U>()))>> : std::true_type {};
+
+	constexpr view() = default;
+
+	template<size_t N>
+	explicit constexpr view(const std::array<T, N>& arr) : data_{arr.data()}, size_{arr.size()} {}
+
+	template<size_t N>
+	explicit constexpr view(const T (&arr)[N]) : data_{arr}, size_{N} {}
+
+	template<typename U, std::enable_if_t<has_size_and_data<U>::value>* = nullptr>
+	explicit constexpr view(const U& arr) : data_(arr.data()), size_{arr.size()} {}
+
+	template<typename U, std::enable_if_t<std::is_integral_v<U>>* = nullptr>
+	constexpr view(const T* first, U&& size) : data_{first}, size_{static_cast<size_t>(size)} {}
+
+	constexpr view(const T* first, const T* last) : data_{first}, size_{static_cast<size_t>(last - first)} {}
+
+	constexpr auto begin() const {
+		return data_;
+	}
+
+	constexpr auto end() const {
+		return data_ + size_;
+	}
+
+private:
+	const T* data_{};
+	size_t size_{};
+};
+
+template<typename T, size_t N>
+view(std::array<T, N>) -> view<T>;
+
+template<typename T, size_t N>
+view(T (&)[N]) -> view<T>;
+
+template<typename T>
+view(T) -> view<std::remove_pointer_t<decltype(std::data(std::declval<T>()))>>;
+
+template<typename T>
+view(T*, T*) -> view<T>;
+
+template<typename T, typename U>
+view(T*, U) -> view<T>;
+
+template<typename... Ts>
+struct type {
+	constexpr type() = default;
+
+	constexpr type(Ts&&... /*unused*/) {}
+};
+
+template<typename... Ts>
+type(Ts&&...) -> type<Ts...>;
+
 namespace detail {
 
 inline constexpr auto protocol_version = 1;
@@ -164,10 +240,11 @@ enum class Indicator : uint32_t {
 	ArrayEnd = 139,
 	StringBegin = 140,
 	StringEnd = 141,
-	TupleBegin = 142,
-	TupleEnd = 143,
-	CustomFormatBegin = 144,
-	CustomFormatEnd = 145,
+	UnicodeStringEnd = 142,
+	TupleBegin = 143,
+	TupleEnd = 144,
+	CustomFormatBegin = 145,
+	CustomFormatEnd = 146,
 };
 
 template<typename T, std::enable_if_t<std::is_arithmetic_v<T>>* = nullptr>
@@ -233,11 +310,23 @@ constexpr void print_value(int& one, T value, Args&&... /*unused*/) {
 	CTP_INTERNAL_PRINT(to_abs_int(fraction), Indicator::FractionFloat);
 }
 
+template<typename T>
+struct is_string_like :
+  std::bool_constant<std::is_constructible_v<std::string_view, T> ||
+#ifdef __cpp_char8_t
+                     std::is_constructible_v<std::u8string_view, T> ||
+#endif
+                     std::is_constructible_v<std::u16string_view, T> ||
+                     std::is_constructible_v<std::u32string_view, T>> {
+};
+
+template<typename T>
+inline constexpr bool is_string_like_v = is_string_like<T>::value;
+
 /// Print contiguous sequences of not char-like objects.
-template<
-  typename T,
-  typename... Args,
-  std::enable_if_t<!std::is_convertible_v<T, std::string_view> && sizeof(decltype(view(std::declval<T>())))>* = nullptr>
+template<typename T,
+         typename... Args,
+         std::enable_if_t<!is_string_like_v<T> && sizeof(decltype(view(std::declval<T>())))>* = nullptr>
 constexpr void print_value(int& one, T&& value, Args&&... args) {
 	CTP_INTERNAL_PRINT(one, Indicator::ArrayBegin);
 	for (auto v : view(value)) {
@@ -247,13 +336,26 @@ constexpr void print_value(int& one, T&& value, Args&&... args) {
 }
 
 /// Print contiguous sequence of char-like objects.
-template<typename T, typename... Args, std::enable_if_t<std::is_convertible_v<T, std::string_view>>* = nullptr>
+template<typename T, typename... Args, std::enable_if_t<is_string_like_v<T>>* = nullptr>
 constexpr void print_value(int& one, T value, Args&&... args) {
 	CTP_INTERNAL_PRINT(one, Indicator::StringBegin);
-	for (auto v : std::string_view{value}) {
-		print_value(one, v, std::forward<Args>(args)..., v, value);
+	if constexpr (std::is_constructible_v<std::string_view, T>) {
+		print_value(one, view{std::string_view{value}}, std::forward<Args>(args)..., value);
+		CTP_INTERNAL_PRINT(one, Indicator::StringEnd);
 	}
-	CTP_INTERNAL_PRINT(one, Indicator::StringEnd);
+#ifdef __cpp_char8_t
+	else if constexpr (std::is_constructible_v<std::u8string_view, T>) {
+		print_value(one, view{std::u8string_view{value}}, std::forward<Args>(args)..., value);
+		CTP_INTERNAL_PRINT(one, Indicator::StringEnd);
+	}
+#endif
+	else if constexpr (std::is_constructible_v<std::u16string_view, T>) {
+		print_value(one, view{std::u16string_view{value}}, std::forward<Args>(args)..., value);
+		CTP_INTERNAL_PRINT(one, Indicator::UnicodeStringEnd);
+	} else if constexpr (std::is_constructible_v<std::u32string_view, T>) {
+		print_value(one, view{std::u32string_view{value}}, std::forward<Args>(args)..., value);
+		CTP_INTERNAL_PRINT(one, Indicator::UnicodeStringEnd);
+	}
 }
 
 /// Print tuple like.
@@ -409,82 +511,19 @@ constexpr auto print(FileDescriptor&& stream, Args&&... args) {
 	return detail::print<false>(std::forward<FileDescriptor>(stream), std::forward<Args>(args)...);
 }
 
-template<typename FileDescriptor,
-         typename... Args,
-         std::enable_if_t<std::is_same_v<std::decay_t<FileDescriptor>, file_descriptor>>*>
-constexpr auto printf(FileDescriptor&& stream, std::string_view format, Args&&... args) {
-	return detail::print<true>(std::forward<FileDescriptor>(stream), format, std::forward<Args>(args)...);
-}
-
-template<typename... Args>
-constexpr auto printf(std::string_view format, Args&&... args) {
+template<typename Format, typename... Args, std::enable_if_t<detail::is_string_like<Format>::value>*>
+constexpr auto printf(Format&& format, Args&&... args) {
 	return detail::print<true>(stdout, format, std::forward<Args>(args)...);
 }
 
-template<typename T>
-class view {
-public:
-	template<typename, typename = void>
-	struct has_size_and_data : std::false_type {};
-
-	template<typename U>
-	struct has_size_and_data<
-	  U,
-	  std::void_t<decltype(std::size(std::declval<U>())), decltype(std::data(std::declval<U>()))>> : std::true_type {};
-
-	constexpr view() = default;
-
-	template<size_t N>
-	explicit constexpr view(const std::array<T, N>& arr) : data_{arr.data()}, size_{arr.size()} {}
-
-	template<size_t N>
-	explicit constexpr view(const T (&arr)[N]) : data_{arr}, size_{N} {}
-
-	template<typename U, std::enable_if_t<has_size_and_data<U>::value>* = nullptr>
-	explicit constexpr view(const U& arr) : data_(arr.data()), size_{arr.size()} {}
-
-	template<typename U, std::enable_if_t<std::is_integral_v<U>>* = nullptr>
-	constexpr view(const T* first, U&& size) : data_{first}, size_{static_cast<size_t>(size)} {}
-
-	constexpr view(const T* first, const T* last) : data_{first}, size_{static_cast<size_t>(last - first)} {}
-
-	constexpr auto begin() const {
-		return data_;
-	}
-
-	constexpr auto end() const {
-		return data_ + size_;
-	}
-
-private:
-	const T* data_{};
-	size_t size_{};
-};
-
-template<typename T, size_t N>
-view(std::array<T, N>) -> view<T>;
-
-template<typename T, size_t N>
-view(T (&)[N]) -> view<T>;
-
-template<typename T>
-view(T) -> view<std::remove_pointer_t<decltype(std::data(std::declval<T>()))>>;
-
-template<typename T>
-view(T*, T*) -> view<T>;
-
-template<typename T, typename U>
-view(T*, U) -> view<T>;
-
-template<typename... Ts>
-struct type {
-	constexpr type() = default;
-
-	constexpr type(Ts&&... /*unused*/) {}
-};
-
-template<typename... Ts>
-type(Ts&&...) -> type<Ts...>;
+template<typename FileDescriptor,
+         typename Format,
+         typename... Args,
+         std::enable_if_t<std::is_same_v<std::decay_t<FileDescriptor>, file_descriptor> &&
+                          detail::is_string_like<Format>::value>*>
+constexpr auto printf(FileDescriptor&& stream, Format&& format, Args&&... args) {
+	return detail::print<true>(std::forward<FileDescriptor>(stream), format, std::forward<Args>(args)...);
+}
 
 }    // namespace ctp
 
