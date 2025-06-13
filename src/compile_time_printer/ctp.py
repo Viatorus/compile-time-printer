@@ -22,6 +22,7 @@ from typing import List, TextIO, Iterator
 PROTOCOL_VERSION = 1
 PROTOCOL_VERSION_INDICATOR_RE = re.compile(
     r'In instantiation of .constexpr auto ctp::detail::print_protocol_version\(\) \[with int Version = (\d+)]')
+PROTOCOL_VERSION_ASSIGN = re.compile(r'^.+? \|\s+int version = Version;')
 START_INDICATOR_RE = re.compile(r' in .?constexpr.? expansion of .ctp::detail::print_start_indicator<')
 END_INDICATOR_RE = re.compile(r' in .?constexpr.? expansion of .ctp::detail::print_end_indicator<')
 PRINT_INDICATOR_RE = re.compile(
@@ -201,9 +202,9 @@ class CTP:
                             'Incompatible CTP versions: C++ v{} <-> Python v{}'.format(cpp_protocol_version,
                                                                                        PROTOCOL_VERSION))
                     not_available = False
-                    next(log)  # required from here
-                    next(log)  # warning: unused variable ...
-                    next(log)  # line | int version = Version;
+                    # Find: line | int version = Version;
+                    while not PROTOCOL_VERSION_ASSIGN.match(next(log)):
+                        pass
                     next(log)  # ...  |     ^~~~~~~
                 else:
                     self._compiler_log.append(line)

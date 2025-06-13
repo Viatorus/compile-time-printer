@@ -5,6 +5,16 @@ import * as monaco from 'monaco-editor';
 
 const COMPILERS = [
   ['GCC trunk', 'gsnapshot'],
+  ['GCC 15.1', 'g151'],
+  ['GCC 14.3', 'g143'],
+  ['GCC 14.2', 'g142'],
+  ['GCC 14.1', 'g141'],
+  ['GCC 13.4', 'g134'],
+  ['GCC 13.3', 'g133'],
+  ['GCC 13.2', 'g132'],
+  ['GCC 13.1', 'g131'],
+  ['GCC 12.4', 'g124'],
+  ['GCC 12.3', 'g123'],
   ['GCC 12.2', 'g122'],
   ['GCC 12.1', 'g121'],
   ['GCC 11.3', 'g113'],
