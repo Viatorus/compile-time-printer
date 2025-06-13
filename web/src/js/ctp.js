@@ -16,7 +16,10 @@ function compile (compiler, compiler_flags, code) {
   const body = {
     source: code,
     options: {
-      userArguments: compiler_flags + ' -fno-diagnostics-color -fsyntax-only'
+      userArguments: compiler_flags + ' -fno-diagnostics-color -fsyntax-only',
+      filters: {
+        execute: true
+      }
     }
   };
   return fetch(`https://godbolt.org/api/compiler/${compiler}/compile`, {
@@ -28,7 +31,11 @@ function compile (compiler, compiler_flags, code) {
     method: 'POST'
   })
     .then(e => e.json())
-    .then(e => [e.code === 0, e.stderr.map(x => x.text)]);
+    .then(e => {
+      const log = e.execResult.buildResult.stderr.map(x => x.text);
+      log.pop(); // Remove "Compiler did not produce an executable"
+      return [e.code === 0, log];
+    });
 }
 
 const CTP_INCLUDE = /#\s*include\s*<ctp\/ctp\.hpp>/;
