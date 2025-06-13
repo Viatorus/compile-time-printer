@@ -7,9 +7,6 @@
 .. image :: https://img.shields.io/pypi/v/compile-time-printer.svg
     :alt: PyPI
     :target: https://pypi.org/project/compile-time-printer/
-.. image :: https://api.bintray.com/packages/viatorus/compile-time-printer/compile-time-printer%3Aviatorus/images/download.svg
-    :alt: Conan
-    :target: https://bintray.com/viatorus/compile-time-printer/compile-time-printer%3Aviatorus/_latestVersion
 .. image :: https://github.com/Viatorus/compile-time-printer/workflows/Testing/badge.svg
     :alt: Build Status
     :target: https://github.com/viatorus/compile-time-printer/releases
@@ -77,9 +74,6 @@ Afterwards, dump the CTP header file and include it in your project:
 .. code-block::
 
     compile-time-printer --dump-header-file
-
-Alternative, you can install the header file via the
-`conan package <https://bintray.com/viatorus/compile-time-printer>`__.
 
 Finally, run CTP with your build command.
 
