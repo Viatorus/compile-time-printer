@@ -229,9 +229,12 @@ class CTP:
                 AT_GLOBAL_SCOPE_RE.match(
                     self._compiler_log[-1]) or IN_FUNCTION_RE.match(self._compiler_log[-1])):
             self._compiler_log.pop()
-        elif len(self._compiler_log) > 1 and IN_INSTANTIATION_OF_RE.match(self._compiler_log[-2]):
-            self._compiler_log.pop()
-            self._compiler_log.pop()
+        else:
+            while len(self._compiler_log) > 0:
+                if IN_INSTANTIATION_OF_RE.match(self._compiler_log[-1]):
+                    self._compiler_log.pop()
+                    break
+                self._compiler_log.pop()
 
         # Remove in file included from.
         while len(self._compiler_log) > 0 and IN_FILE_INCLUDED_RE.match(self._compiler_log[-1]):
