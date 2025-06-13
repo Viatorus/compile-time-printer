@@ -1,4 +1,3 @@
-exclude .conan/**
 exclude .github/**
 exclude examples/**
 exclude include/**

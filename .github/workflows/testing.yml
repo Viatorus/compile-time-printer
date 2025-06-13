@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        gcc-version: [ 'gcc:7', 'gcc:8', 'gcc:9', 'gcc:10', 'gcc:11', 'gcc:12' ]
+        gcc-version: [ 'gcc:7', 'gcc:8', 'gcc:9', 'gcc:10', 'gcc:11', 'gcc:12', 'gcc:13', 'gcc:14', 'gcc:15' ]
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-python@v2
@@ -73,15 +73,3 @@ jobs:
         run: |
           python setup.py dists
           twine check dist/*
-  publish-conan-test:
-    runs-on: ubuntu-latest
-    container:
-      image: conanio/gcc11
-      options: --user 1001
-    steps:
-      - uses: actions/checkout@v2
-        with:
-          fetch-depth: 0
-      - name: Build
-        run: |
-          conan create .conan
