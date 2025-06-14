@@ -59,10 +59,11 @@ class Indicator(IntEnum):
     ArrayEnd = 139
     StringBegin = 140
     StringEnd = 141
-    TupleBegin = 142
-    TupleEnd = 143
-    CustomFormatBegin = 144
-    CustomFormatEnd = 145
+    UnicodeStringEnd = 142
+    TupleBegin = 143
+    TupleEnd = 144
+    CustomFormatBegin = 145
+    CustomFormatEnd = 146
 
 
 class TypePrettifier:
@@ -293,14 +294,17 @@ class CTP:
                 num += factor * float(number) / math.pow(10, 18)
                 stack[-1].append(num)
             elif indicator == Indicator.PositiveInteger:
-                if type_of_value == 'char':
+                if type_of_value in ['char', 'char8_t', 'char16_t', 'char32_t']:
                     stack[-1].append(chr(number))
                 elif type_of_value == 'bool':
                     stack[-1].append(bool(number))
                 else:
                     stack[-1].append(number)
             elif indicator == Indicator.NegativeInteger:
-                stack[-1].append(-number)
+                if type_of_value == 'char':
+                    stack[-1].append(chr(256 - number))
+                else:
+                    stack[-1].append(-number)
             elif indicator == Indicator.Type:
                 stack[-1].append(self._type_prettifier.prettify(type_of_value))
             elif indicator in [Indicator.ArrayBegin, Indicator.StringBegin, indicator.TupleBegin]:
@@ -309,7 +313,12 @@ class CTP:
                 array = stack.pop()
                 stack[-1].append(array)
             elif indicator == Indicator.StringEnd:
-                array = stack.pop()
+                array = stack.pop()[0]
+                # Transform characters to bytes and decode.
+                array = bytes([ord(x) for x in array])
+                stack[-1].append(array.decode('utf8'))
+            elif indicator == Indicator.UnicodeStringEnd:
+                array = stack.pop()[0]
                 stack[-1].append(''.join(array))
             elif indicator == Indicator.TupleEnd:
                 array = stack.pop()
