@@ -39,7 +39,7 @@ const COMPILERS = [
 const COMPILER_MESSAGE_RE = /<source>:(\d+):(\d+): ((?:fatal )?error|warning):\s+(.+)/;
 const DEFAULT_PLAYGROUND_DATA = {
   code: CTP_EXAMPLE,
-  compiler: 'g122',
+  compiler: 'g151',
   compiler_flags: '-fpermissive -std=c++17',
   show_compiler_log: true
 };
